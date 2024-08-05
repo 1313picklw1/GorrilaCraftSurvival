@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GorrilaCraftSurvival</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <div>Score: <span id="score">0</span></div>
+        <div>Tagged: <span id="tagged">No</span></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
+
+        // Gorilla
+        const gorillaGeometry = new THREE.BoxGeometry();
+        const gorillaMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const gorilla = new THREE.Mesh(gorillaGeometry, gorillaMaterial);
+        scene.add(gorilla);
+
+        // Resources
+        const resourceGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const resourceMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 });
+        const resources = [];
+        for (let i = 0; i < 10; i++) {
+            const resource = new THREE.Mesh(resourceGeometry, resourceMaterial);
+            resource.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
+            scene.add(resource);
+            resources.push(resource);
+        }
+
+        // Tagged Gorillas
+        const taggedGorillaMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const taggedGorillas = [];
+        for (let i = 0; i < 3; i++) {
+            const taggedGorilla = new THREE.Mesh(gorillaGeometry, taggedGorillaMaterial);
+            taggedGorilla.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
+            scene.add(taggedGorilla);
+            taggedGorillas.push(taggedGorilla);
+        }
+
+        // Setup camera
+        camera.position.z = 10;
+
+        // Game variables
+        let score = 0;
+        let isTagged = false;
+
+        // Game update function
+        function update() {
+            resources.forEach((resource, index) => {
+                if (gorilla.position.distanceTo(resource.position) < 1) {
+                    scene.remove(resource);
+                    resources.splice(index, 1);
+                    score++;
+                    document.getElementById('score').textContent = score;
+                }
+            });
+
+            taggedGorillas.forEach(tagged => {
+                const direction = new THREE.Vector3().subVectors(gorilla.position, tagged.position).normalize();
+                tagged.position.add(direction.multiplyScalar(0.05));
+                if (gorilla.position.distanceTo(tagged.position) < 1) {
+                    isTagged = true;
+                    document.getElementById('tagged').textContent = 'Yes';
+                }
+            });
+
+            if (resources.length === 0) {
+                alert('You collected all resources! Game Over!');
+                resetGame();
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(update);
+        }
+
+        // Reset game function
+        function resetGame() {
+            scene.remove(gorilla);
+            gorilla.position.set(0, 0.5, 0);
+            scene.add(gorilla);
+
+            resources.forEach(resource => scene.remove(resource));
+            resources.length = 0;
+            taggedGorillas.forEach(taggedGorilla => scene.remove(taggedGorilla));
+            taggedGorillas.length = 0;
+
+            createResources();
+            createTaggedGorillas();
+
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('tagged').textContent = 'No';
+        }
+
+        function createResources() {
+            for (let i = 0; i < 10; i++) {
+                const resource = new THREE.Mesh(resourceGeometry, resourceMaterial);
+                resource.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
+                scene.add(resource);
+                resources.push(resource);
+            }
+        }
+
+        function createTaggedGorillas() {
+            for (let i = 0; i < 3; i++) {
+                const taggedGorilla = new THREE.Mesh(gorillaGeometry, taggedGorillaMaterial);
+                taggedGorilla.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
+                scene.add(taggedGorilla);
+                taggedGorillas.push(taggedGorilla);
+            }
+        }
+
+        // Handle controls
+        document.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp':
+                    gorilla.position.z -= 0.5;
+                    break;
+                case 'ArrowDown':
+                    gorilla.position.z += 0.5;
+                    break;
+                case 'ArrowLeft':
+                    gorilla.position.x -= 0.5;
+                    break;
+                case 'ArrowRight':
+                    gorilla.position.x += 0.5;
+                    break;
+            }
+        });
+
+        // Initial game setup
+        update();
+    </script>
+</body>
+</html>
