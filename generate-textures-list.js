@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const texturesDir = './textures/blocks/';
-const outputFile = './textures/textures.json';
+const texturesDir = './blocks/';
+const outputFile = './textures.json';
 
 function getFiles(dir) {
   return fs.readdirSync(dir).filter(file => fs.statSync(path.join(dir, file)).isFile());
