@@ -23,9 +23,11 @@
 <body>
     <div id="info">
         <div>Score: <span id="score">0</span></div>
-        <div>Tagged: <span id="tagged">No</span></div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/loaders/TextureLoader.js"></script>
     <script>
         // Scene setup
         const scene = new THREE.Scene();
@@ -40,63 +42,93 @@
         controls.dampingFactor = 0.25;
         controls.enableZoom = true;
 
-        // Gorilla
-        const gorillaGeometry = new THREE.BoxGeometry();
-        const gorillaMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const gorilla = new THREE.Mesh(gorillaGeometry, gorillaMaterial);
-        scene.add(gorilla);
+        // Load textures
+        const textureLoader = new THREE.TextureLoader();
+        const textures = {
+            grass: textureLoader.load('textures/blocks/grass_block.png'),
+            dirt: textureLoader.load('textures/blocks/dirt.png'),
+            stone: textureLoader.load('textures/blocks/stone.png'),
+            // Add more textures here
+        };
 
-        // Resources
-        const resourceGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const resourceMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 });
-        const resources = [];
-        for (let i = 0; i < 10; i++) {
-            const resource = new THREE.Mesh(resourceGeometry, resourceMaterial);
-            resource.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
-            scene.add(resource);
-            resources.push(resource);
-        }
+        // GLTFLoader for loading models
+        const loader = new THREE.GLTFLoader();
 
-        // Tagged Gorillas
-        const taggedGorillaMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const taggedGorillas = [];
-        for (let i = 0; i < 3; i++) {
-            const taggedGorilla = new THREE.Mesh(gorillaGeometry, taggedGorillaMaterial);
-            taggedGorilla.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
-            scene.add(taggedGorilla);
-            taggedGorillas.push(taggedGorilla);
-        }
-
-        // Setup camera
-        camera.position.z = 10;
-
-        // Game variables
+        let gorilla;
+        let resources = [];
         let score = 0;
-        let isTagged = false;
 
-        // Game update function
+        function loadGorillaModel() {
+            loader.load('models/gorilla.glb', (gltf) => {
+                gorilla = gltf.scene;
+                gorilla.scale.set(1, 1, 1);
+                scene.add(gorilla);
+                gorilla.position.set(0, 0.5, 0);
+                camera.position.set(0, 15, 15); // Adjusted for better view of the world
+                camera.lookAt(0, 0, 0);
+            });
+        }
+
+        function createTexturedBlock(texture, size) {
+            const geometry = new THREE.BoxGeometry(size, size, size);
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            const cube = new THREE.Mesh(geometry, material);
+            return cube;
+        }
+
+        function generateWorld(width, depth, blockSize) {
+            for (let x = 0; x < width; x++) {
+                for (let z = 0; z < depth; z++) {
+                    let height = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 5;
+
+                    let texture;
+                    if (height > 1) {
+                        texture = textures.grass;
+                    } else if (height > 0) {
+                        texture = textures.dirt;
+                    } else {
+                        texture = textures.stone;
+                    }
+
+                    const block = createTexturedBlock(texture, blockSize);
+                    block.position.set(x * blockSize, height * blockSize, z * blockSize);
+                    scene.add(block);
+                }
+            }
+        }
+
+        function initGame() {
+            // Load player model
+            loadGorillaModel();
+
+            // Generate world
+            generateWorld(20, 20, 1);
+
+            // Add some resources for collection
+            for (let i = 0; i < 10; i++) {
+                const texture = i % 2 === 0 ? textures.dirt : textures.stone;
+                const resource = createTexturedBlock(texture, 0.5);
+                resource.position.set(Math.random() * 20 - 10, 0.25, Math.random() * 20 - 10);
+                scene.add(resource);
+                resources.push(resource);
+            }
+        }
+
         function update() {
-            resources.forEach((resource, index) => {
-                if (gorilla.position.distanceTo(resource.position) < 1) {
-                    scene.remove(resource);
-                    resources.splice(index, 1);
-                    score++;
-                    document.getElementById('score').textContent = score;
-                }
-            });
+            if (gorilla) {
+                resources.forEach((resource, index) => {
+                    if (gorilla.position.distanceTo(resource.position) < 1) {
+                        scene.remove(resource);
+                        resources.splice(index, 1);
+                        score++;
+                        document.getElementById('score').textContent = score;
+                    }
+                });
 
-            taggedGorillas.forEach(tagged => {
-                const direction = new THREE.Vector3().subVectors(gorilla.position, tagged.position).normalize();
-                tagged.position.add(direction.multiplyScalar(0.05));
-                if (gorilla.position.distanceTo(tagged.position) < 1) {
-                    isTagged = true;
-                    document.getElementById('tagged').textContent = 'Yes';
+                if (resources.length === 0) {
+                    alert('You collected all resources! Game Over!');
+                    resetGame();
                 }
-            });
-
-            if (resources.length === 0) {
-                alert('You collected all resources! Game Over!');
-                resetGame();
             }
 
             controls.update();
@@ -104,62 +136,34 @@
             requestAnimationFrame(update);
         }
 
-        // Reset game function
         function resetGame() {
-            scene.remove(gorilla);
-            gorilla.position.set(0, 0.5, 0);
-            scene.add(gorilla);
-
-            resources.forEach(resource => scene.remove(resource));
-            resources.length = 0;
-            taggedGorillas.forEach(taggedGorilla => scene.remove(taggedGorilla));
-            taggedGorillas.length = 0;
-
-            createResources();
-            createTaggedGorillas();
-
+            scene.clear(); // Clear the scene
+            initGame();    // Reinitialize the game
             score = 0;
             document.getElementById('score').textContent = score;
-            document.getElementById('tagged').textContent = 'No';
         }
 
-        function createResources() {
-            for (let i = 0; i < 10; i++) {
-                const resource = new THREE.Mesh(resourceGeometry, resourceMaterial);
-                resource.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
-                scene.add(resource);
-                resources.push(resource);
-            }
-        }
-
-        function createTaggedGorillas() {
-            for (let i = 0; i < 3; i++) {
-                const taggedGorilla = new THREE.Mesh(gorillaGeometry, taggedGorillaMaterial);
-                taggedGorilla.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
-                scene.add(taggedGorilla);
-                taggedGorillas.push(taggedGorilla);
-            }
-        }
-
-        // Handle controls
         document.addEventListener('keydown', (event) => {
-            switch (event.key) {
-                case 'ArrowUp':
-                    gorilla.position.z -= 0.5;
-                    break;
-                case 'ArrowDown':
-                    gorilla.position.z += 0.5;
-                    break;
-                case 'ArrowLeft':
-                    gorilla.position.x -= 0.5;
-                    break;
-                case 'ArrowRight':
-                    gorilla.position.x += 0.5;
-                    break;
+            if (gorilla) {
+                switch (event.key) {
+                    case 'ArrowUp':
+                        gorilla.position.z -= 0.5;
+                        break;
+                    case 'ArrowDown':
+                        gorilla.position.z += 0.5;
+                        break;
+                    case 'ArrowLeft':
+                        gorilla.position.x -= 0.5;
+                        break;
+                    case 'ArrowRight':
+                        gorilla.position.x += 0.5;
+                        break;
+                }
             }
         });
 
-        // Initial game setup
+        // Initialize game
+        initGame();
         update();
     </script>
 </body>
