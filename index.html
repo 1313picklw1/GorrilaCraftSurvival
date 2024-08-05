@@ -41,7 +41,7 @@
         // Load textures
         async function loadTextures() {
             try {
-                const response = await fetch('blocks/textures.json');
+                const response = await fetch('textures/textures.json');
                 if (!response.ok) throw new Error('Network response was not ok ' + response.statusText);
                 const data = await response.json();
 
@@ -163,8 +163,8 @@
 
         async function initGame() {
             const textures = await loadTextures();
-            generateWorld(20, 20, 1, blocks);
-            addResources(blocks);
+            generateWorld(20, 20, 1, textures);
+            addResources(textures);
             loadGorillaModel();
             update();
         }
