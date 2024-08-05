@@ -2,6 +2,8 @@ let scene, camera, renderer;
 let collectibles = [];
 const totalCollectibles = 100;
 let collectedCount = 0;
+let player; // To hold the player model
+const playerSpeed = 0.5; // Adjust speed as needed
 
 function init() {
     // Initialize scene, camera, and renderer
@@ -13,12 +15,13 @@ function init() {
 
     camera.position.z = 50;
 
+    // Load models
+    loadModels();
+    loadPlayer();
+
     // Handle window resizing
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();
-
-    // Load 3D models
-    loadModels();
 
     // Start animation loop
     animate();
@@ -43,7 +46,6 @@ function loadModels() {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
-                // Adjust properties for different models
                 switch (child.name) {
                     case 'GrassBlock':
                         // Customize GrassBlock properties if needed
@@ -62,7 +64,6 @@ function loadModels() {
                         break;
                 }
 
-                // Add the model to the scene and collectibles array
                 let mesh = child.clone();
                 mesh.position.set(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
                 mesh.scale.set(5, 5, 5); // Adjust scale as needed
@@ -72,6 +73,19 @@ function loadModels() {
         });
     }, undefined, (error) => {
         console.error('An error happened:', error);
+    });
+}
+
+function loadPlayer() {
+    const loader = new THREE.GLTFLoader();
+
+    loader.load('models/gorrila.glb', (gltf) => {
+        player = gltf.scene;
+        player.scale.set(2, 2, 2); // Adjust scale as needed
+        player.position.set(0, 0, 0); // Start position
+        scene.add(player);
+    }, undefined, (error) => {
+        console.error('An error happened while loading the player model:', error);
     });
 }
 
@@ -103,11 +117,32 @@ function checkCollection() {
 
 function update() {
     checkCollection();
+    if (player) {
+        handlePlayerMovement();
+    }
+}
+
+function handlePlayerMovement() {
+    const keyboard = {}; // You can use an object to track pressed keys
+
+    // Handle keyboard input for movement
+    if (keyboard['ArrowUp']) player.position.z -= playerSpeed;
+    if (keyboard['ArrowDown']) player.position.z += playerSpeed;
+    if (keyboard['ArrowLeft']) player.position.x -= playerSpeed;
+    if (keyboard['ArrowRight']) player.position.x += playerSpeed;
 }
 
 function updateCollectedCount() {
     document.getElementById('collectibleCount').textContent = `Collectibles: ${collectedCount}/${totalCollectibles}`;
 }
+
+// Keyboard event listeners
+window.addEventListener('keydown', (event) => {
+    keyboard[event.key] = true;
+});
+window.addEventListener('keyup', (event) => {
+    keyboard[event.key] = false;
+});
 
 // Initialize the scene
 init();
