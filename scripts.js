@@ -146,3 +146,4 @@ window.addEventListener('keyup', (event) => {
 
 // Initialize the scene
 init();
+ 
