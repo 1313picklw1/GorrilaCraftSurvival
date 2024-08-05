@@ -20,19 +20,10 @@
     <div id="info">
         <div>Score: <span id="score">0</span></div>
     </div>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js",
-                "three/examples/jsm/loaders/GLTFLoader.js": "https://unpkg.com/three@0.128.0/examples/jsm/loaders/GLTFLoader.js"
-            }
-        }
-    </script>
     <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+        import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+        import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
 
         // Basic setup
         const scene = new THREE.Scene();
@@ -50,7 +41,7 @@
         // Load textures
         async function loadTextures() {
             try {
-                const response = await fetch('textures/textures.json');
+                const response = await fetch('blocks/textures.json');
                 if (!response.ok) throw new Error('Network response was not ok ' + response.statusText);
                 const data = await response.json();
 
@@ -170,15 +161,4 @@
             }
         });
 
-        async function initGame() {
-            const textures = await loadTextures();
-            generateWorld(20, 20, 1, textures);
-            addResources(textures);
-            loadGorillaModel();
-            update();
-        }
-
-        initGame();
-    </script>
-</body>
-</html>
+        async function init
