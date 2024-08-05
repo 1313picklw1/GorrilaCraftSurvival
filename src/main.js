@@ -23,6 +23,8 @@ function init() {
 
     window.addEventListener('resize', onWindowResize, false);
     window.addEventListener('mousemove', onMouseMove, false);
+    window.addEventListener('keydown', onKeyDown, false);
+    window.addEventListener('keyup', onKeyUp, false);
 
     animate();
 }
@@ -33,10 +35,54 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    update();
-    renderer.render(scene, camera);
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const keyboard = {};
+
+function onMouseMove(event) {
+    // Normalize mouse coordinates to [-1, 1] range
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onKeyDown(event) {
+    keyboard[event.key] = true;
+}
+
+function onKeyUp(event) {
+    keyboard[event.key] = false;
+}
+
+function checkCollection() {
+    // Update the raycaster's ray with the current camera and mouse position
+    raycaster.updateMatrixWorld();  // Ensure raycaster matrix is updated
+    raycaster.ray.origin.setFromCamera(mouse, camera);
+
+    // Find intersections
+    const intersects = raycaster.intersectObjects(collectibles);
+
+    intersects.forEach(intersect => {
+        if (collectibles.includes(intersect.object)) {
+            scene.remove(intersect.object);
+            collectibles = collectibles.filter(c => c !== intersect.object);
+            collectedCount++;
+            updateCollectedCount();
+        }
+    });
+}
+
+function update() {
+    checkCollection();
+    if (player) {
+        handlePlayerMovement();
+    }
+}
+
+function handlePlayerMovement() {
+    if (keyboard['ArrowUp']) player.position.z -= playerSpeed;
+    if (keyboard['ArrowDown']) player.position.z += playerSpeed;
+    if (keyboard['ArrowLeft']) player.position.x -= playerSpeed;
+    if (keyboard['ArrowRight']) player.position.x += playerSpeed;
 }
 
 function loadModels() {
@@ -91,56 +137,14 @@ function loadPlayer() {
     });
 }
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-function onMouseMove(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
-
-function checkCollection() {
-    // Update raycaster
-    raycaster.ray.origin.setFromCamera(mouse, camera);
-
-    // Find intersections
-    const intersects = raycaster.intersectObjects(collectibles);
-
-    intersects.forEach(intersect => {
-        if (collectibles.includes(intersect.object)) {
-            scene.remove(intersect.object);
-            collectibles = collectibles.filter(c => c !== intersect.object);
-            collectedCount++;
-            updateCollectedCount();
-        }
-    });
-}
-
-function update() {
-    checkCollection();
-    if (player) {
-        handlePlayerMovement();
-    }
-}
-
-function handlePlayerMovement() {
-    const keyboard = {}; 
-
-    if (keyboard['ArrowUp']) player.position.z -= playerSpeed;
-    if (keyboard['ArrowDown']) player.position.z += playerSpeed;
-    if (keyboard['ArrowLeft']) player.position.x -= playerSpeed;
-    if (keyboard['ArrowRight']) player.position.x += playerSpeed;
-}
-
 function updateCollectedCount() {
     document.getElementById('collectibleCount').textContent = `Collectibles: ${collectedCount}/${totalCollectibles}`;
 }
 
-window.addEventListener('keydown', (event) => {
-    keyboard[event.key] = true;
-});
-window.addEventListener('keyup', (event) => {
-    keyboard[event.key] = false;
-});
+function animate() {
+    requestAnimationFrame(animate);
+    update();
+    renderer.render(scene, camera);
+}
 
 init();
