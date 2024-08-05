@@ -1,1 +1,28 @@
-
+{
+  "name": "GorrilaCraft",
+  "version": "1.0.0",
+  "description": "Goriila Tag X Minecraft",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.149.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1313picklw1/GorrilaCraftSurvival"
+  },
+  "keywords": [
+    "threejs",
+    "3d",
+    "web"
+  ],
+  "author": "Hecker",
+  "license": "MIT"
+}
