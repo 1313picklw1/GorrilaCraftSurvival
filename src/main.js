@@ -1,12 +1,14 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
 let scene, camera, renderer;
 let collectibles = [];
 const totalCollectibles = 100;
 let collectedCount = 0;
-let player; // To hold the player model
-const playerSpeed = 0.5; // Adjust speed as needed
+let player;
+const playerSpeed = 0.5;
 
 function init() {
-    // Initialize scene, camera, and renderer
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer();
@@ -15,15 +17,13 @@ function init() {
 
     camera.position.z = 50;
 
-    // Load models
     loadModels();
+    loadCollectibles();
     loadPlayer();
 
-    // Handle window resizing
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();
 
-    // Start animation loop
     animate();
 }
 
@@ -40,49 +40,53 @@ function animate() {
 }
 
 function loadModels() {
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
 
+    // Load blocks
     loader.load('models/combined_blocks.glb', (gltf) => {
-        const model = gltf.scene;
-        model.traverse((child) => {
+        gltf.scene.traverse((child) => {
             if (child.isMesh) {
-                switch (child.name) {
-                    case 'GrassBlock':
-                        // Customize GrassBlock properties if needed
-                        break;
-                    case 'StoneBlock':
-                        // Customize StoneBlock properties if needed
-                        break;
-                    case 'OakPlanks':
-                        // Customize OakPlanks properties if needed
-                        break;
-                    case 'Cobblestone':
-                        // Customize Cobblestone properties if needed
-                        break;
-                    default:
-                        // Handle any other models
-                        break;
-                }
-
                 let mesh = child.clone();
                 mesh.position.set(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
-                mesh.scale.set(5, 5, 5); // Adjust scale as needed
+                mesh.scale.set(5, 5, 5);
+                scene.add(mesh);
+            }
+        });
+    }, undefined, (error) => {
+        console.error('An error happened while loading blocks model:', error);
+    });
+}
+
+function loadCollectibles() {
+    const loader = new GLTFLoader();
+
+    // Load collectibles
+    loader.load('models/collectible.glb', (gltf) => {
+        gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+                let mesh = child.clone();
+                mesh.position.set(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
+                mesh.scale.set(5, 5, 5);
                 scene.add(mesh);
                 collectibles.push(mesh);
             }
         });
+
+        if (collectibles.length > totalCollectibles) {
+            collectibles = collectibles.slice(0, totalCollectibles);
+        }
     }, undefined, (error) => {
-        console.error('An error happened:', error);
+        console.error('An error happened while loading collectibles model:', error);
     });
 }
 
 function loadPlayer() {
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
 
     loader.load('models/gorrila.glb', (gltf) => {
         player = gltf.scene;
-        player.scale.set(2, 2, 2); // Adjust scale as needed
-        player.position.set(0, 0, 0); // Start position
+        player.scale.set(2, 2, 2);
+        player.position.set(0, 0, 0);
         scene.add(player);
     }, undefined, (error) => {
         console.error('An error happened while loading the player model:', error);
@@ -106,7 +110,6 @@ function checkCollection() {
 
     intersects.forEach(intersect => {
         if (collectibles.includes(intersect.object)) {
-            // Handle collection logic
             scene.remove(intersect.object);
             collectibles = collectibles.filter(c => c !== intersect.object);
             collectedCount++;
@@ -123,9 +126,8 @@ function update() {
 }
 
 function handlePlayerMovement() {
-    const keyboard = {}; // You can use an object to track pressed keys
+    const keyboard = {}; 
 
-    // Handle keyboard input for movement
     if (keyboard['ArrowUp']) player.position.z -= playerSpeed;
     if (keyboard['ArrowDown']) player.position.z += playerSpeed;
     if (keyboard['ArrowLeft']) player.position.x -= playerSpeed;
@@ -136,7 +138,6 @@ function updateCollectedCount() {
     document.getElementById('collectibleCount').textContent = `Collectibles: ${collectedCount}/${totalCollectibles}`;
 }
 
-// Keyboard event listeners
 window.addEventListener('keydown', (event) => {
     keyboard[event.key] = true;
 });
@@ -144,6 +145,4 @@ window.addEventListener('keyup', (event) => {
     keyboard[event.key] = false;
 });
 
-// Initialize the scene
 init();
- 
