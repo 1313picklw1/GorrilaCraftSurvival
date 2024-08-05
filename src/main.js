@@ -1,7 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/loaders/GLTFLoader.js';
 
-
 let scene, camera, renderer;
 let collectibles = [];
 const totalCollectibles = 100;
@@ -23,7 +22,7 @@ function init() {
     loadPlayer();
 
     window.addEventListener('resize', onWindowResize, false);
-    onWindowResize();
+    window.addEventListener('mousemove', onMouseMove, false);
 
     animate();
 }
@@ -43,7 +42,6 @@ function animate() {
 function loadModels() {
     const loader = new GLTFLoader();
 
-    // Load blocks
     loader.load('models/combined_blocks.glb', (gltf) => {
         gltf.scene.traverse((child) => {
             if (child.isMesh) {
@@ -61,7 +59,6 @@ function loadModels() {
 function loadCollectibles() {
     const loader = new GLTFLoader();
 
-    // Load collectibles
     loader.load('models/collectible.glb', (gltf) => {
         gltf.scene.traverse((child) => {
             if (child.isMesh) {
@@ -102,11 +99,11 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-window.addEventListener('mousemove', onMouseMove, false);
-
 function checkCollection() {
-    raycaster.updateMatrixWorld();
+    // Update raycaster
     raycaster.ray.origin.setFromCamera(mouse, camera);
+
+    // Find intersections
     const intersects = raycaster.intersectObjects(collectibles);
 
     intersects.forEach(intersect => {
