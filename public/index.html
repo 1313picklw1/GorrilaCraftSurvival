@@ -8,9 +8,17 @@
         body { margin: 0; overflow: hidden; }
         #collectibleCount { position: absolute; top: 10px; left: 10px; font-size: 18px; color: white; background: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; }
     </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
     <div id="collectibleCount">Collectibles: 0/100</div>
-    <script type="module" src="/GorrilaCraftSurvival/src/main.js"></script> <!-- Path to main.js -->
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
