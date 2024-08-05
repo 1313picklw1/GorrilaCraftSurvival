@@ -42,14 +42,21 @@
         controls.dampingFactor = 0.25;
         controls.enableZoom = true;
 
-        // Load textures
-        const textureLoader = new THREE.TextureLoader();
-        const textures = {
-            grass: textureLoader.load('textures/blocks/grass_block.png'),
-            dirt: textureLoader.load('textures/blocks/dirt.png'),
-            stone: textureLoader.load('textures/blocks/stone.png'),
-            // Add more textures here
-        };
+        // Load textures from JSON file
+        async function loadTextures() {
+            const response = await fetch('https://username.github.io/repository/textures/textures.json');
+            const data = await response.json();
+
+            const textures = {};
+            const textureLoader = new THREE.TextureLoader();
+
+            for (const path of data.textures) {
+                const textureName = path.split('/').pop().split('.')[0];
+                textures[textureName] = textureLoader.load(path);
+            }
+
+            return textures;
+        }
 
         // GLTFLoader for loading models
         const loader = new THREE.GLTFLoader();
@@ -76,7 +83,7 @@
             return cube;
         }
 
-        function generateWorld(width, depth, blockSize) {
+        function generateWorld(width, depth, blockSize, textures) {
             for (let x = 0; x < width; x++) {
                 for (let z = 0; z < depth; z++) {
                     let height = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 5;
@@ -98,20 +105,20 @@
         }
 
         function initGame() {
-            // Load player model
             loadGorillaModel();
 
-            // Generate world
-            generateWorld(20, 20, 1);
+            // Load textures and then generate world
+            loadTextures().then((textures) => {
+                generateWorld(20, 20, 1, textures);
 
-            // Add some resources for collection
-            for (let i = 0; i < 10; i++) {
-                const texture = i % 2 === 0 ? textures.dirt : textures.stone;
-                const resource = createTexturedBlock(texture, 0.5);
-                resource.position.set(Math.random() * 20 - 10, 0.25, Math.random() * 20 - 10);
-                scene.add(resource);
-                resources.push(resource);
-            }
+                for (let i = 0; i < 10; i++) {
+                    const texture = i % 2 === 0 ? textures.dirt : textures.stone;
+                    const resource = createTexturedBlock(texture, 0.5);
+                    resource.position.set(Math.random() * 20 - 10, 0.25, Math.random() * 20 - 10);
+                    scene.add(resource);
+                    resources.push(resource);
+                }
+            });
         }
 
         function update() {
