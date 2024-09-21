@@ -24,7 +24,6 @@ function init() {
     loadPlayer();
 
     window.addEventListener('resize', onWindowResize, false);
-    window.addEventListener('mousemove', onMouseMove, false);
     window.addEventListener('keydown', onKeyDown, false);
     window.addEventListener('keyup', onKeyUp, false);
 
@@ -38,16 +37,8 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
 }
 
-// Raycaster setup (optional, for mouse-based interactions)
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+// Keyboard input
 const keyboard = {};
-
-// Handle mouse move (optional, for mouse-based interactions)
-function onMouseMove(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
 
 // Handle key down
 function onKeyDown(event) {
@@ -63,7 +54,7 @@ function onKeyUp(event) {
 function checkCollection() {
     collectibles.forEach(collectible => {
         const distance = player.position.distanceTo(collectible.position);
-        if (distance < 5) { // Adjust based on scale
+        if (distance < 5) { // Adjust based on the scale of your objects
             scene.remove(collectible);
             collectibles = collectibles.filter(c => c !== collectible);
             collectedCount++;
