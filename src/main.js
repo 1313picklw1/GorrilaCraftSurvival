@@ -38,15 +38,15 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
 }
 
-// Raycaster setup
+// Raycaster setup (optional, for mouse-based interactions)
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const keyboard = {};
 
-// Handle mouse move
+// Handle mouse move (optional, for mouse-based interactions)
 function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
 // Handle key down
@@ -59,22 +59,13 @@ function onKeyUp(event) {
     keyboard[event.key] = false;
 }
 
-// Check for collectible intersections
+// Check for collectible proximity (player-object collision detection)
 function checkCollection() {
-    // Update raycaster with camera and mouse position
-    raycaster.updateMatrixWorld(); // Ensure the raycaster's matrix is updated
-
-    // Calculate the ray direction based on the mouse position
-    raycaster.ray.origin.copy(camera.position);
-    raycaster.ray.direction.set(mouse.x, mouse.y, 1).unproject(camera).sub(raycaster.ray.origin).normalize();
-
-    // Find intersections
-    const intersects = raycaster.intersectObjects(collectibles);
-
-    intersects.forEach(intersect => {
-        if (collectibles.includes(intersect.object)) {
-            scene.remove(intersect.object);
-            collectibles = collectibles.filter(c => c !== intersect.object);
+    collectibles.forEach(collectible => {
+        const distance = player.position.distanceTo(collectible.position);
+        if (distance < 5) { // Adjust based on scale
+            scene.remove(collectible);
+            collectibles = collectibles.filter(c => c !== collectible);
             collectedCount++;
             updateCollectedCount();
         }
@@ -83,18 +74,28 @@ function checkCollection() {
 
 // Update game logic
 function update() {
+    applyGravity();
     checkCollection();
     if (player) {
         handlePlayerMovement();
     }
 }
 
-// Handle player movement
+// Handle player movement (including 3D movement with optional jumping/flying)
 function handlePlayerMovement() {
     if (keyboard['ArrowUp']) player.position.z -= playerSpeed;
     if (keyboard['ArrowDown']) player.position.z += playerSpeed;
     if (keyboard['ArrowLeft']) player.position.x -= playerSpeed;
     if (keyboard['ArrowRight']) player.position.x += playerSpeed;
+    if (keyboard[' '] && player.position.y <= 1) player.position.y += playerSpeed; // Jump
+    if (keyboard['Shift']) player.position.y -= playerSpeed; // Move down
+}
+
+// Apply gravity to player (optional)
+function applyGravity() {
+    if (player.position.y > 0) {
+        player.position.y -= 0.1; // Adjust gravity speed
+    }
 }
 
 // Load block models
@@ -115,24 +116,22 @@ function loadModels() {
     });
 }
 
-// Load collectible models
+// Load collectible models (limited to totalCollectibles)
 function loadCollectibles() {
     const loader = new GLTFLoader();
 
     loader.load('models/collectible.glb', (gltf) => {
+        let count = 0;
         gltf.scene.traverse((child) => {
-            if (child.isMesh) {
+            if (child.isMesh && count < totalCollectibles) {
                 let mesh = child.clone();
                 mesh.position.set(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
                 mesh.scale.set(5, 5, 5);
                 scene.add(mesh);
                 collectibles.push(mesh);
+                count++;
             }
         });
-
-        if (collectibles.length > totalCollectibles) {
-            collectibles = collectibles.slice(0, totalCollectibles);
-        }
     }, undefined, (error) => {
         console.error('An error happened while loading collectibles model:', error);
     });
